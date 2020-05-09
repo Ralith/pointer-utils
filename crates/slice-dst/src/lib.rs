@@ -181,7 +181,7 @@ where
 }
 
 /// Types that can allocate a custom slice DST within them.
-pub unsafe trait AllocSliceDst<S: ?Sized + SliceDst> {
+pub unsafe trait AllocSliceDst<S: ?Sized + SliceDst>: Sized {
     /// Create a new custom slice DST.
     ///
     /// # Safety
@@ -191,14 +191,38 @@ pub unsafe trait AllocSliceDst<S: ?Sized + SliceDst> {
     /// `init` receives a fully uninitialized pointer and must not read anything before writing.
     unsafe fn new_slice_dst<I>(len: usize, init: I) -> Self
     where
-        I: FnOnce(ptr::NonNull<S>);
+        I: FnOnce(ptr::NonNull<S>),
+    {
+        enum Void {}
+
+        #[allow(clippy::unit_arg)]
+        let init = |ptr: ptr::NonNull<S>| Ok::<(), Void>(init(ptr));
+        match Self::try_new_slice_dst(len, init) {
+            Ok(a) => a,
+            Err(void) => match void {},
+        }
+    }
+
+    /// Create a new custom slice DST, where initialization may fail.
+    ///
+    /// # Safety
+    ///
+    /// `init` must properly initialize the object behind the pointer.
+    /// The stored length of the slice DST must be the same as the length used in this call.
+    /// `init` receives a fully uninitialized pointer and must not read anything before writing.
+    ///
+    /// The allocated place will be deallocated without dropping if the closure returns an error.
+    /// To avoid leaking anything on an error return or panic, use scope guards for initialization.
+    unsafe fn try_new_slice_dst<I, E>(len: usize, init: I) -> Result<Self, E>
+    where
+        I: FnOnce(ptr::NonNull<S>) -> Result<(), E>;
 }
 
 // SAFETY: Box is guaranteed to be allocatable by GlobalAlloc.
 unsafe impl<S: ?Sized + SliceDst> AllocSliceDst<S> for Box<S> {
-    unsafe fn new_slice_dst<I>(len: usize, init: I) -> Self
+    unsafe fn try_new_slice_dst<I, E>(len: usize, init: I) -> Result<Self, E>
     where
-        I: FnOnce(ptr::NonNull<S>),
+        I: FnOnce(ptr::NonNull<S>) -> Result<(), E>,
     {
         struct RawBox<S: ?Sized + SliceDst>(ptr::NonNull<S>, Layout);
 
@@ -223,26 +247,26 @@ unsafe impl<S: ?Sized + SliceDst> AllocSliceDst<S> for Box<S> {
         }
 
         let ptr = RawBox::new(len);
-        init(ptr.0);
-        ptr.finalize()
+        init(ptr.0)?;
+        Ok(ptr.finalize())
     }
 }
 
 unsafe impl<S: ?Sized + SliceDst> AllocSliceDst<S> for Rc<S> {
-    unsafe fn new_slice_dst<I>(len: usize, init: I) -> Self
+    unsafe fn try_new_slice_dst<I, E>(len: usize, init: I) -> Result<Self, E>
     where
-        I: FnOnce(ptr::NonNull<S>),
+        I: FnOnce(ptr::NonNull<S>) -> Result<(), E>,
     {
-        Box::new_slice_dst(len, init).into()
+        Box::try_new_slice_dst(len, init).map(Into::into)
     }
 }
 
 unsafe impl<S: ?Sized + SliceDst> AllocSliceDst<S> for Arc<S> {
-    unsafe fn new_slice_dst<I>(len: usize, init: I) -> Self
+    unsafe fn try_new_slice_dst<I, E>(len: usize, init: I) -> Result<Self, E>
     where
-        I: FnOnce(ptr::NonNull<S>),
+        I: FnOnce(ptr::NonNull<S>) -> Result<(), E>,
     {
-        Box::new_slice_dst(len, init).into()
+        Box::try_new_slice_dst(len, init).map(Into::into)
     }
 }
 
