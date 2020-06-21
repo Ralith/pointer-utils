@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["erasable"] = [];
+implementors["slice_dst"] = [{"text":"impl&lt;Header, Item&gt; <a class=\"trait\" href=\"erasable/trait.Erasable.html\" title=\"trait erasable::Erasable\">Erasable</a> for <a class=\"struct\" href=\"slice_dst/struct.SliceWithHeader.html\" title=\"struct slice_dst::SliceWithHeader\">SliceWithHeader</a>&lt;Header, Item&gt;","synthetic":false,"types":["slice_dst::provided_types::SliceWithHeader"]},{"text":"impl&lt;Header&gt; <a class=\"trait\" href=\"erasable/trait.Erasable.html\" title=\"trait erasable::Erasable\">Erasable</a> for <a class=\"struct\" href=\"slice_dst/struct.StrWithHeader.html\" title=\"struct slice_dst::StrWithHeader\">StrWithHeader</a>&lt;Header&gt;","synthetic":false,"types":["slice_dst::provided_types::StrWithHeader"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

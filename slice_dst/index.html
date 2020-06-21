@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `slice_dst` crate."><meta name="keywords" content="rust, rustlang, rust-lang, slice_dst"><title>slice_dst - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../slice_dst/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate slice_dst</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all slice_dst's items</p></a><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'slice_dst', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/slice_dst/lib.rs.html#1-327' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>slice_dst</a></span></h1><div class='docblock'><p>Support for custom slice-based DSTs.</p>
+<p>By handling allocation manually, we can manually allocate the <code>Box</code> for a custom DST.
+So long as the size lines up with what it should be, once the metadata is created,
+Rust actually already handles the DSTs it already supports perfectly well, safely!
+Setting them up is the hard part, which this crate handles for you.</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>We have a tree structure! Each node holds some data and its children array.
+In normal Rust, you would probably typically implement it something like this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">struct</span> <span class="ident">Node</span> {
+    <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
+    <span class="ident">children</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Node</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">Node</span> { <span class="ident">data</span>: <span class="string">&quot;a&quot;</span>, <span class="ident">children</span>: <span class="macro">vec</span><span class="macro">!</span>[] };
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">Node</span> { <span class="ident">data</span>: <span class="string">&quot;b&quot;</span>, <span class="ident">children</span>: <span class="macro">vec</span><span class="macro">!</span>[] };
+<span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Node</span> { <span class="ident">data</span>: <span class="string">&quot;c&quot;</span>, <span class="ident">children</span>: <span class="macro">vec</span><span class="macro">!</span>[] };
+<span class="kw">let</span> <span class="ident">abc</span> <span class="op">=</span> <span class="ident">Node</span> { <span class="ident">data</span>: <span class="string">&quot;abc&quot;</span>, <span class="ident">children</span>: <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">a</span>.<span class="ident">into</span>(), <span class="ident">b</span>.<span class="ident">into</span>(), <span class="ident">c</span>.<span class="ident">into</span>()] };</pre></div>
+<p>With this setup, the memory layout looks vaguely like the following diagram:</p>
+<pre><code class="language-text">                                             +--------------+
+                                             |Node          |
+                                       +----&gt;|data: &quot;a&quot;     |
++------------+    +---------------+    |     |children: none|
+|Node        |    |Vec&lt;Arc&lt;Node&gt;&gt; |    |     +--------------+
+|data: &quot;abc&quot; |    |[0]: +--------------+     |Node          |
+|children: +-----&gt;|[1]: +-------------------&gt;|data: &quot;b&quot;     |
++------------+    |[2]: +--------------+     |children: none|
+                  +---------------|    |     +--------------+
+                                       |     |Node          |
+                                       +----&gt;|data: &quot;c&quot;     |
+                                             |children: none|
+                                             +--------------+
+</code></pre>
+<p>With this crate, however, the children array can be stored inline with the node's data:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">struct</span> <span class="ident">Node</span>(<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">SliceWithHeader</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">Node</span><span class="op">&gt;</span><span class="op">&gt;</span>);
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">Node</span>(<span class="ident">SliceWithHeader</span>::<span class="ident">new</span>(<span class="string">&quot;a&quot;</span>, <span class="prelude-val">None</span>));
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">Node</span>(<span class="ident">SliceWithHeader</span>::<span class="ident">new</span>(<span class="string">&quot;b&quot;</span>, <span class="prelude-val">None</span>));
+<span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Node</span>(<span class="ident">SliceWithHeader</span>::<span class="ident">new</span>(<span class="string">&quot;c&quot;</span>, <span class="prelude-val">None</span>));
+<span class="comment">// this vec is just an easy way to get an ExactSizeIterator</span>
+<span class="kw">let</span> <span class="ident">abc</span> <span class="op">=</span> <span class="ident">Node</span>(<span class="ident">SliceWithHeader</span>::<span class="ident">new</span>(<span class="string">&quot;abc&quot;</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>]));</pre></div>
+<pre><code class="language-text">                         +-----------+
++-------------+          |Node       |
+|Node         |    +----&gt;|length: 0  |
+|length: 3    |    |     |header: &quot;a&quot;|
+|header: &quot;abc&quot;|    |     +-----------+
+|slice: [0]: +-----+     |Node       |
+|       [1]: +----------&gt;|length: 0  |
+|       [2]: +-----+     |header: &quot;b&quot;|
++-------------+    |     +-----------+
+                   |     |Node       |
+                   +----&gt;|length: 0  |
+                         |header: &quot;c&quot;|
+                         +------------
+</code></pre>
+<p>The exact times you will want to use this rather than just standard types varries.
+This is mostly useful when space optimization is very important.
+This is still useful when using an arena: it reduces the allocations in the arena
+in exchange for moving node payloads to the heap alongside the children array.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.SliceWithHeader.html" title='slice_dst::SliceWithHeader struct'>SliceWithHeader</a></td><td class='docblock-short'><p>A custom slice-based DST.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.StrWithHeader.html" title='slice_dst::StrWithHeader struct'>StrWithHeader</a></td><td class='docblock-short'><p>A custom str-based DST.</p>
+</td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr class='module-item'><td><a class="trait" href="trait.AllocSliceDst.html" title='slice_dst::AllocSliceDst trait'>AllocSliceDst</a></td><td class='docblock-short'><p>Types that can allocate a custom slice DST within them.</p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.SliceDst.html" title='slice_dst::SliceDst trait'>SliceDst</a></td><td class='docblock-short'><p>A custom slice-based dynamically sized type.</p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.TryAllocSliceDst.html" title='slice_dst::TryAllocSliceDst trait'>TryAllocSliceDst</a></td><td class='docblock-short'><p>Types that can allocate a custom slice DST within them,
+given a fallible initialization function.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.alloc_slice_dst.html" title='slice_dst::alloc_slice_dst fn'>alloc_slice_dst</a></td><td class='docblock-short'><p>Allocate a slice-based DST with the [global allocator][<code>alloc()</code>].</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.alloc_slice_dst_in.html" title='slice_dst::alloc_slice_dst_in fn'>alloc_slice_dst_in</a></td><td class='docblock-short'><p>Allocate a slice-based DST with the [global allocator][<code>alloc()</code>] within some container.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "slice_dst";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

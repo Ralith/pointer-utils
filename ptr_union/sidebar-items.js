@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Enum2","An unpacked version of [`Union2`]."],["Enum4","An unpacked version of [`Union4`]."]],"struct":[["Builder2","A builder for [`Union2`]."],["Builder4","A builder for [`Union4`]."],["Union2","A pointer union of two pointer types."],["Union4","A pointer union of four pointer types."]]});

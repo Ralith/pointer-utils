@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ArcBorrow","Borrowed version of [`Arc`]."],["RcBorrow","Borrowed version of [`Rc`]."]]});

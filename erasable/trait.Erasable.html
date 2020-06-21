@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `Erasable` trait in crate `erasable`."><meta name="keywords" content="rust, rustlang, rust-lang, Erasable"><title>erasable::Erasable - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../erasable/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Trait Erasable</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#associated-const">Associated Constants</a><div class="sidebar-links"><a href="#associatedconstant.ACK_1_1_0">ACK_1_1_0</a></div><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.unerase">unerase</a></div><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.erase">erase</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='index.html'>erasable</a></p><script>window.sidebarCurrent = {name: 'Erasable', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/erasable/lib.rs.html#194-267' title='goto source code'>[src]</a></span><span class='in-band'>Trait <a href='index.html'>erasable</a>::<wbr><a class="trait" href=''>Erasable</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><pre class='rust trait'>pub unsafe trait Erasable {
+    const <a href='#associatedconstant.ACK_1_1_0' class="constant"><b>ACK_1_1_0</b></a>: bool;
+
+    unsafe fn <a href='#tymethod.unerase' class='fnname'>unerase</a>(this: <a class="type" href="../erasable/type.ErasedPtr.html" title="type erasable::ErasedPtr">ErasedPtr</a>) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/ptr/non_null/struct.NonNull.html" title="struct core::ptr::non_null::NonNull">NonNull</a>&lt;Self&gt;;
+
+    fn <a href='#method.erase' class='fnname'>erase</a>(this: <a class="struct" href="https://doc.rust-lang.org/nightly/core/ptr/non_null/struct.NonNull.html" title="struct core::ptr::non_null::NonNull">NonNull</a>&lt;Self&gt;) -&gt; <a class="type" href="../erasable/type.ErasedPtr.html" title="type erasable::ErasedPtr">ErasedPtr</a> { ... }
+}</pre></div><div class='docblock'><p>A pointee type that supports type-erased pointers (thin pointers).</p>
+<p>This trait is automatically implemented for all sized types,
+and can be manually implemented for unsized types that know their own metadata.</p>
+</div>
+            <h2 id='associated-const' class='small-section-header'>Associated Constants<a href='#associated-const' class='anchor'></a></h2><div class='methods'><h3 id='associatedconstant.ACK_1_1_0' class='method'><code id='ACK_1_1_0.v'>const <a href='#associatedconstant.ACK_1_1_0' class="constant"><b>ACK_1_1_0</b></a>: bool</code></h3><div class='docblock'><p>Whether this implementor has acknowledged the 1.1.0 update to
+<code>unerase</code>'s documented implementation requirements.</p>
+<p>Prior to 1.1.0, creating a temporary shared reference (<code>&amp;_</code>) in
+<code>unerase</code> was explicitly listed as allowed, but for the 1.1.0 release
+it was determined that this in fact can cause problems for some use
+cases that <code>Erasable</code> is designed to support.</p>
+<p>Implementing this as <code>false</code> is <em>not allowed</em> and is <em>not</em> permission
+to create references within <code>unerase</code>. It only exists as a way to
+make the soundness fix in 1.1.0 disallowing references not breaking.
+You <em>must</em> override this with a value of <code>true</code> and follow the current
+documented requirements for <code>unerase</code>, and not create references.</p>
+<p>If your use of <code>unerase</code> would be problematic if it creates a temporary
+shared reference, you should assert that this value is <code>true</code>.
+Not doing so will expose you to potentially unsound implementations
+written against 1.0.0 before the reference clarification was made.</p>
+<p>The environment variable <code>ERASABLE_ENFORCE_1_1_0_SEMANTICS</code> can be set
+to enforce that all implementors have provided an override for this.</p>
+</div></div><span class='loading-content'>Loading content...</span>
+            <h2 id='required-methods' class='small-section-header'>Required methods<a href='#required-methods' class='anchor'></a></h2><div class='methods'><h3 id='tymethod.unerase' class='method'><code id='unerase.v'>unsafe fn <a href='#tymethod.unerase' class='fnname'>unerase</a>(this: <a class="type" href="../erasable/type.ErasedPtr.html" title="type erasable::ErasedPtr">ErasedPtr</a>) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/ptr/non_null/struct.NonNull.html" title="struct core::ptr::non_null::NonNull">NonNull</a>&lt;Self&gt;</code></h3><div class='docblock'><p>Unerase this erased pointer.</p>
+<p>Note that this <em>must</em> be sound to roundtrip pointers with any provenance,
+shared, unique, raw, frozen, mutable, and any valid combination thereof.
+(In other words, <code>&amp;mut _</code> and <code>&amp;_</code> can be safely erased and unerased, and
+any raw pointer should roundtrip without losing the provenance it had.)</p>
+<p>Concretely, this means that the resulting pointer <em>must</em> be derived
+from the input pointer without any intervening references manifested.
+Additionally, no references to the pointee <em>at all</em> should be created,
+as their mere temporary existence may impact the validity and
+usable provenance of other pointers to the same location.</p>
+<p>Creating a shared reference sounds on the surface like it should be ok.
+After all, you have a known-valid pointer to your type, and you can
+borrow from whatever pointer was erased. However, in the face of raw
+pointers with a shared mutable provenance, this is problematic.
+If a write to the pointee location even potentially races with any
+invocation of <code>unerase</code>, and it creates a reference to the location,
+we have immediate undefined behavior for writing behind a shared ref.</p>
+<p>The root issue is that there may be external synchronization that this
+implementation has no way of knowing about. An implementation of this
+trait must only read the mimimum amount of data required to re-type the
+pointer, and must do so with a raw pointer read, or, if and only if
+there is a known <code>UnsafeCell</code> point (such as an atomic), a reference to
+that <code>UnsafeCell</code> point and the safe API of that <code>UnsafeCell</code> point.</p>
+<h1 id="safety" class="section-header"><a href="#safety">Safety</a></h1>
+<p>The erased pointer must have been created by <code>erase</code>ing a valid pointer.</p>
+</div></div><span class='loading-content'>Loading content...</span>
+            <h2 id='provided-methods' class='small-section-header'>Provided methods<a href='#provided-methods' class='anchor'></a></h2><div class='methods'><h3 id='method.erase' class='method'><code id='erase.v'>fn <a href='#method.erase' class='fnname'>erase</a>(this: <a class="struct" href="https://doc.rust-lang.org/nightly/core/ptr/non_null/struct.NonNull.html" title="struct core::ptr::non_null::NonNull">NonNull</a>&lt;Self&gt;) -&gt; <a class="type" href="../erasable/type.ErasedPtr.html" title="type erasable::ErasedPtr">ErasedPtr</a></code></h3><div class='docblock'><p>Turn this erasable pointer into an erased pointer.</p>
+<p>To retrieve the original pointer, use <code>unerase</code>.</p>
+</div></div><span class='loading-content'>Loading content...</span>
+            <h2 id='implementors' class='small-section-header'>Implementors<a href='#implementors' class='anchor'></a></h2><div class='item-list' id='implementors-list'><h3 id='impl-Erasable' class='impl'><code class='in-band'>impl&lt;T:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt; Erasable for T</code><a href='#impl-Erasable' class='anchor'></a><a class='srclink' href='../src/erasable/lib.rs.html#612-619' title='goto source code'>[src]</a></h3><div class='impl-items'><h4 id='method.unerase' class="method hidden"><code id='unerase.v-1'>unsafe fn <a href='#method.unerase' class='fnname'>unerase</a>(this: <a class="type" href="../erasable/type.ErasedPtr.html" title="type erasable::ErasedPtr">ErasedPtr</a>) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/ptr/non_null/struct.NonNull.html" title="struct core::ptr::non_null::NonNull">NonNull</a>&lt;T&gt;</code><a class='srclink' href='../src/erasable/lib.rs.html#613-616' title='goto source code'>[src]</a></h4><h4 id='associatedconstant.ACK_1_1_0-1' class="associatedconstant hidden"><code id='ACK_1_1_0.v-1'>const <a href='#associatedconstant.ACK_1_1_0-1' class="constant"><b>ACK_1_1_0</b></a>: bool</code><a class='srclink' href='../src/erasable/lib.rs.html#618' title='goto source code'>[src]</a></h4></div></div><span class='loading-content'>Loading content...</span><script type="text/javascript" src="../implementors/erasable/trait.Erasable.js" async></script></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "erasable";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
